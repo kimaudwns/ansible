@@ -1,0 +1,48 @@
+- name: Create VPC
+  ec2_vpc_net:
+    name: team5_VPC
+    cidr_block: "{{ vpc_cidr }}"
+    region: "{{ vpc_region }}"
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    state: present
+    tags:
+      Name: team5_VPC
+  register: vpc_result
+
+- name: Set facts
+  set_fact:
+    vpc_id: "{{ vpc_result.vpc.id }}"
+
+- name: Debug fact
+  ansible.builtin.debug:
+    var: vpc_id
+- name: Create Internet Gateway
+  ec2_vpc_igw:
+    vpc_id: "{{ vpc_id }}"  # vpc_id 변수를 사용
+    region: "{{ vpc_region }}"
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    state: present
+    tags:
+      Name: team5_Internet_Gateway
+  register: igw_result
+
+- name: Debug Internet Gateway result
+  ansible.builtin.debug:
+    var: igw_result  # IGW 생성 결과 디버그
+
+- name: Set Internet Gateway ID fact
+  set_fact:
+    igw_id: "{{ igw_result.gateway_id }}"  # IGW ID를 igw_id에 저장
+      
+- name: Debug fact
+  ansible.builtin.debug:
+    var: igw
+
+- name: Save selected VPC info to YAML file
+  template:
+    src: templates/main.yml.j2  # 템플릿 파일 경로
+    dest: ./info/id_info.yml  # 저장할 파일 경로
+
+      

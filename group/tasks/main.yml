@@ -1,0 +1,64 @@
+---
+- name: Include VPC info
+  include_vars:
+     file: info/id_info.yml
+     name: aws
+- name: Debug public subnet result for public1a
+  debug:
+    var: aws
+- name: team5-ssh-security-group
+  ec2_group:
+    name: team5-ssh
+    description: team5-ssh-security
+    vpc_id: "{{ aws.vpc }}"
+    region: ap-northeast-2
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    tags:
+      Name: team5-ssh
+    rules:
+      - proto: tcp
+        from_port: 22
+        to_port: 22
+        cidr_ip: 0.0.0.0/0
+  register: team5_ssh
+- name: Debug public subnet result for public1a
+  debug:
+    var: team5_ssh
+- name: Set facts for public subnet 1a
+  set_fact:
+   ssh: "{{ team5_ssh.group_id}}"
+
+
+- name: Create HTTP security group
+  ec2_group:
+    name: team5-http
+    description: team5-http-security
+    vpc_id: "{{ aws.vpc }}"
+    region: ap-northeast-2
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    tags:
+      Name: team5-http
+    rules:
+      - proto: tcp
+        from_port: 80
+        to_port: 80
+        cidr_ip: 0.0.0.0/0
+
+      - proto: tcp
+        from_port: 443
+        to_port: 443
+        cidr_ip: 0.0.0.0/0
+  register: team5_http
+- name: Debug public subnet result for public1a
+  debug:
+    var: team5_http     
+- name: Set facts for public subnet 1a
+  set_fact:
+    http: "{{ team5_http.group_id}}"
+- name: Save selected VPC info to YAML file
+  template:
+    src: templates/main.yml.j2  # 템플릿 파일 경로
+    dest: ./info/group_info.yml  # 저장할 파일 경로
+

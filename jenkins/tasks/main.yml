@@ -1,0 +1,72 @@
+---
+- name: Include subnet info
+  include_vars:
+     file: info/sudnet_info.yml
+     name: subnet
+
+- name: Debug public subnet result for public1a
+  debug:
+    var: subnet
+
+- name: Include group info
+  include_vars:
+     file: info/group_info.yml
+     name: group
+
+
+- name: Debug public subnet result for public1a
+  debug:
+    var: group
+
+
+- name: jenkins_dsd
+  ec2_instance:
+       name: "team5-jenkins"
+       key_name: "{{ key }}"
+       vpc_subnet_id: "{{ subnet.private1a }}"
+       aws_access_key: "{{ aws_access_key }}"
+       aws_secret_key: "{{ aws_secret_key }}"
+       instance_type: t2.micro
+       security_groups:
+         - "{{ group.ssh }}"
+         - "{{ group.http }}"
+       network:
+        assign_public_ip: False
+       image_id: ami-042e76978adeb8c48
+       region: ap-northeast-2
+       wait: yes
+       tags:
+          Environment: jenkins
+       user_data: |
+                  #!/bin/bash
+                  cd /home/ubuntu
+                  git clone https://github.com/sjh4616/aws-project
+                  cd aws-project
+                  sudo yum install maven
+                  mvn package
+                  cd /path/to/your/project
+                  mvn -f path/to/pom.xml
+                  sh install-docker.sh
+                  sh install-docker-compose.sh
+                  cd aws-project
+                  docker-compose up -d --build
+                  sudo mkdir /var/spool/swap
+                  sudo touch /var/spool/swap/swapfile
+                  sudo dd if=/dev/zero of=/var/spool/swap/swapfile count=2048000 bs=1024
+                  sudo chmod 600 /var/spool/swap/swapfile
+                  sudo mkswap /var/spool/swap/swapfile
+                  sudo swapon /var/spool/swap/swapfile
+                  echo "/var/spool/swap/swapfile    none    swap    defaults    0 0" | sudo tee -a /etc/fstab
+
+  register: jenkins
+- debug:
+     var: jenkins
+
+- name: Set facts for public subnet 1a
+  set_fact:
+    jenkins: "{{ jenkins.instances[0].instance_id }}"
+- name: Save selected VPC info to YAML file
+  template:
+    src: templates/main.yml.j2  # 템플릿 파일 경로
+    dest: ./info/jenkins_info.yml  # 저장할 파일 경로
+

@@ -1,0 +1,64 @@
+---
+- name: Include SUBNET info
+  include_vars:
+     file: info/sudnet_info.yml
+     name: subnet
+  
+- name: Include group info
+  include_vars:
+     file: info/group_info.yml
+     name: group
+
+- name: Create target
+  ec2_instance:
+    name: "team5-target"
+    key_name: "{{ key }}"
+    vpc_subnet_id: "{{ subnet.public2c }}"
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    instance_type: t2.micro
+    security_groups:
+       - "{{ group.ssh }}"
+       - "{{ group.http }}"
+    network:
+      assign_public_ip: true
+    image_id: ami-042e76978adeb8c48
+    region: ap-northeast-2
+    wait: yes
+    user_data: |
+        #!/bin/bash
+        sudo apt update -y
+        sudo apt install -y docker.io git ruby wget unzip maven
+        cd /home/ubuntu
+        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+        sudo apt install unzip -y
+        unzip awscliv2.zip
+        sudo ./aws/install
+
+        # AWS CodeDeploy 설치
+        wget https://aws-codedeploy-ap-northeast-2.s3.amazonaws.com/latest/install
+        chmod u+x ./install
+        sudo ./install auto
+        sudo service codedeploy-agent start
+
+        # Docker Compose 설치
+        sudo curl -L "https://github.com/docker/compose/releases/download/v2.1.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+        sudo chmod +x /usr/local/bin/docker-compose
+        sudo usermod -aG docker ubuntu
+        sudo systemctl enable docker
+        sudo systemctl start docker
+    tags:
+      Environment: "target"
+  register: team5_target
+- name: Debug public subnet result for public1a
+  debug:
+    var: team5_target
+- name: Set facts for target
+  set_fact:
+    target: "{{team5_target.instances[0].instance_id}}"
+- name: Save selected target info to YAML file
+  template:
+    src: templates/main.yml.j2  # 템플릿 파일 경로
+    dest: ./info/target_info.yml  # 저장할 파일 경로
+
+

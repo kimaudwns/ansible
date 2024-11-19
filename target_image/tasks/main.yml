@@ -1,0 +1,55 @@
+---
+- name: Include VPC info
+  include_vars:
+    file: info/target_info.yml
+    name: targe
+
+- name: Debug public subnet result for public1a
+  debug:
+    var: targe
+
+- name: Wait for 5 seconds
+  pause:
+    seconds: 10
+
+- name: instance to stop
+  ec2_instance:
+     instance_ids: "{{ targe.target }}"
+     state: stopped
+     region: ap-northeast-2
+     aws_access_key: "{{ aws_access_key }}"
+     aws_secret_key: "{{ aws_secret_key }}"
+
+- name: Create AMI
+  ec2_ami:
+    region: ap-northeast-2
+    instance_id: "{{ targe.target }}"
+    name: "team5-ami-{{ ansible_date_time.date }}-{{ ansible_date_time.iso8601_basic }}"
+    no_reboot: yes
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    tags:
+      Name: team5-ami
+  register: target_image
+
+- name: Debug AMI creation result
+  debug:
+    var: target_image
+  when: target_image is defined
+
+- name: Set facts for target_image
+  set_fact:
+    target_image: "{{ target_image.image_id }}"
+
+- name: instance to delete (after creating AMI)
+  ec2_instance:
+     instance_ids: "{{ targe.target }}"
+     state: absent
+     region: ap-northeast-2
+     aws_access_key: "{{ aws_access_key }}"
+     aws_secret_key: "{{ aws_secret_key }}"
+
+- name: Save selected AWS info to YAML file
+  template:
+    src: templates/main.yml.j2
+    dest: ./info/target_image_info.yml

@@ -1,0 +1,71 @@
+---
+- name: Include subnet info
+  include_vars:
+     file: info/sudnet_info.yml
+     name: subnet
+
+- name: Include VPC info
+  include_vars:
+     file: info/group_info.yml
+     name: group
+
+- name: Include VPC info
+  include_vars:
+     file: info/targroup_info.yml
+     name: targroup
+       
+- name: Create an Application Load Balancer
+  elb_application_lb:
+    name: team5-alb
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    security_groups:
+      - "{{ group.http }}"
+      - "{{ group.ssh }}"
+    subnets:
+      - "{{ subnet.public1a }}"
+      - "{{ subnet.public2c }}"
+    scheme: internet-facing
+    listeners:
+      - Protocol: HTTP
+        Port: 80
+        DefaultActions:
+          - Type: forward
+            TargetGroupArn: "{{ targroup.target_arn }}"
+        Rules:
+          - Priority: 1
+            Conditions:
+              - Field: host-header
+                Values: ["team5j.jinlabs.net"]
+            Actions:
+              - Type: forward
+                TargetGroupName: team5-jenkins
+          - Priority: 2
+            Conditions:
+              - Field: host-header
+                Values: ["team5t.jinlabs.net"]
+            Actions:
+              - Type: forward
+                TargetGroupName: team5-target
+    region: ap-northeast-2
+    state: present
+  register: appsb
+
+- name: Debug 
+  debug:
+    var: appsb
+- name: Set facts for 
+  set_fact:
+    appsb: "{{ appsb.load_balancer_arn }}"
+    appbb: "{{ appsb.dns_name }}"
+    appzon: "{{ appsb.canonical_hosted_zone_id }}"
+- name: Debug
+  debug:
+    var: appzon
+
+- name: Save selected aws info to YAML file
+  template:
+    src: templates/main.yml.j2  # 템플릿 파일 경로
+    dest: ./info/app_info.yml  # 저장할 파일 경로
+      
+      

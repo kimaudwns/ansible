@@ -1,0 +1,46 @@
+---
+- name: Include VPC info
+  include_vars:
+     file: info/group_info.yml
+     name: group
+- name: Include VPC info
+  include_vars:
+     file: info/target_image_info.yml
+     name: target_image
+       
+- name: Include VPC info
+  include_vars:
+     file: info/role_info.yml
+     name: role
+- debug:
+    msg: "IAM Instance Profile Name: {{ role.ec2role }}"       
+- name: Debug template
+  debug:
+    var:  target_image 
+
+- name: Create template
+  ec2_launch_template:
+    name: "team5-template"
+    key_name: "{{ key }}"
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    instance_type: t2.micro
+    security_group_ids:
+      - "{{ group.ssh }}"
+      - "{{ group.http }}"
+    image_id: "{{ target_image.target_image }}" 
+    default_version: 1
+    iam_instance_profile: team5-ec2-role 
+    region: ap-northeast-2
+  register: temp
+
+- name: Debug template
+  debug:
+    var: temp
+- name: Set facts for public subnet 1a
+  set_fact:
+    temp: "{{ temp.template.launch_template_id }}"
+- name: Save selected VPC info to YAML file
+  template:
+    src: templates/main.yml.j2  # 템플릿 파일 경로
+    dest: ./info/temp_info.yml  # 저장할 파일 경로

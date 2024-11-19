@@ -1,0 +1,42 @@
+- name: Include VPC info
+  include_vars:
+     file: info/app_info.yml
+     name: add
+- name: Debug 
+  debug:
+    var: appbb
+
+- name: Wait for 10 seconds
+  pause:
+    seconds: 10
+
+- name: Create route53 record for team5j.jinlabs.net
+  route53:
+    zone: jinlabs.net
+    state: present
+    record: team5j.jinlabs.net
+    type: A
+    alias: true
+    value: "{{ add.appbb }}"  # ALB의 DNS 이름
+    alias_hosted_zone_id: "{{ add.appzon }}"  # 호스팅 존 ID
+    alias_evaluate_target_health: no  
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    overwrite: true
+- name: Create route53 record for team5t.jinlabs.net
+  route53:
+    zone: jinlabs.net
+    state: present
+    record: team5t.jinlabs.net
+    type: A
+    alias: true
+    value: "{{ add.appbb }}"  # ALB의 DNS 이름
+    alias_hosted_zone_id: "{{ add.appzon }}"  # 호스팅 존 ID
+    alias_evaluate_target_health: no
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    overwrite: true  
+- name: Wait for 10 seconds
+  pause:
+    seconds: 10
+ 

@@ -1,0 +1,30 @@
+---
+- name: Include VPC info
+  include_vars:
+    file: info/role_info.yml
+    name: role
+- name: Check if CodeDeploy application exists
+  shell: |
+    aws deploy get-application --application-name team5-codedeploy --region ap-northeast-2
+  register: app_check_result
+  ignore_errors: true 
+  environment:
+    AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
+    AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"  
+- name: Create CodeDeploy application2
+  shell: |
+    aws deploy create-application\
+      --application-name team5-codedeploy\
+      --compute-platform Server\
+      --region ap-northeast-2
+  register: create_app_result
+  environment:
+    AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
+    AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
+  when: app_check_result.rc != 0  
+  changed_when: "'applicationId' in create_app_result.stdout"
+  failed_when: "'error' in create_app_result.stderr"
+- name: Output result
+  debug:
+    var: create_app_result
+  when: create_app_result is defined

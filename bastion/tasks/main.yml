@@ -1,0 +1,43 @@
+---
+- name: Include subnet info
+  include_vars:
+     file: info/sudnet_info.yml
+     name: subnet
+- name: Debug public subnet result for public1a
+  debug:
+    var: subnet
+
+- name: Create bastion
+  ec2_instance:
+    name: "team5-bastion"
+    key_name: "{{ key }}"
+    vpc_subnet_id: "{{ subnet.public1a }}"
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    instance_type: t2.micro
+    security_group: team5-ssh
+    network:
+      assign_public_ip: true
+    image_id: "{{ ubnutu_id }}"
+    region: ap-northeast-2
+    wait: yes
+    tags:
+      Environment: bastion
+  register: bastion_ec2
+
+- name: Output EC2 Instance information
+  debug:
+    var: bastion_ec2
+
+- name: Set facts for bastion  
+  set_fact:
+    bastion_image: "{{ bastion_ec2.instances[0].instance_id }}"
+
+- name: Save selected VPC info to YAML file
+  template:
+    src: templates/main.yml.j2  # 템플릿 파일 경로
+    dest: ./info/bastion_info.yml  # 저장할 파일 경로
+     
+
+
+

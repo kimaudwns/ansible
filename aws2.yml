@@ -1,0 +1,15 @@
+---
+- hosts: localhost
+  become: yes
+  vars_files:
+    - ./vars.yml
+  vars:     
+    ansible_python_interpreter: /usr/bin/python3
+  roles:
+    #       - template
+    #      - target.2
+            # - appbls
+            # - router53
+          - asg
+    #      - codedeploy
+    #      - s3

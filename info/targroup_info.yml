@@ -1,0 +1,3 @@
+target_arn: "arn:aws:elasticloadbalancing:ap-northeast-2:491085389788:targetgroup/team5-target/416c1e4b285b114e"
+jenkins_arn: "arn:aws:elasticloadbalancing:ap-northeast-2:491085389788:targetgroup/team5-jenkins/0017ed18332e6c05"
+

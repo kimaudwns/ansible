@@ -1,0 +1,3 @@
+appsb_arn: "arn:aws:elasticloadbalancing:ap-northeast-2:491085389788:loadbalancer/app/team5-alb/4ab31fbc75d2d23e"
+appbb: "team5-alb-604872660.ap-northeast-2.elb.amazonaws.com"
+appzon: "ZWKZPGTI48KDX"

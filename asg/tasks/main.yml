@@ -1,0 +1,49 @@
+---
+- name: Include VPC info
+  include_vars:
+     file: info/temp_info.yml
+     name: tem
+
+- name: Include target group info
+  include_vars:
+     file: info/targroup_info.yml
+     name: targroup
+
+- name: Include subnet info
+  include_vars:
+     file: info/sudnet_info.yml
+     name: subnet
+
+- name: Debug
+  debug:
+    var: tem
+- name: Create Auto Scaling Group
+  ec2_asg:
+    name: "team5-asg"
+    launch_template:
+      launch_template_id: "{{ tem.temp }}"
+      version: 1
+    min_size: 1
+    max_size: 2
+    desired_capacity: 2
+    region: ap-northeast-2
+    vpc_zone_identifier: "{{ subnet.private1a }},{{ subnet.private2c }}"  # 서브넷 구분은 쉼표로 처리
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    target_group_arns:
+      - "{{ targroup.target_arn }}"
+    tags:
+      - Name: "team5-instance"
+        propagate_at_launch: true
+    state: present
+  register: asg
+
+- name: Debug
+  debug:
+    var: asg
+
+
+
+
+
+

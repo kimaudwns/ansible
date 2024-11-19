@@ -1,0 +1,96 @@
+- name: Create IAM Role for CodeDeploy
+  iam_role:
+    name: team5-CodeDeployServiceRole
+    assume_role_policy_document: |
+        {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "codedeploy.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        }
+    managed_policy: arn:aws:iam::aws:policy/service-role/AWSCodeDeployRole
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    state: present
+  register: AWSCodeDeployRole
+- name: Debug EC2 Role creation result
+  debug:
+    var: AWSCodeDeployRole 
+    
+- name: Set facts for IAM Role for EC2
+  set_fact:
+   awsCodeDeployRole_arn: "{{ AWSCodeDeployRole.arn }}"
+
+
+- name: Debug AWS CodeDeploy Role creation result
+  debug:
+    var: AWSCodeDeployRole
+
+- name: Create IAM policy for EC2
+  iam_managed_policy:
+    policy_name: team5-ec2-policy
+    policy: |
+        {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": [
+                "s3:Get*",
+                "s3:List*"
+              ],
+              "Resource": "*"
+            }
+          ]
+        }
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    state: present
+  register: iam_policy
+
+- name: Debug IAM policy creation result
+  debug:
+    var: iam_policy
+
+- name: Create IAM Role for EC2
+  iam_role:
+    name: team5-ec2-role
+    assume_role_policy_document: |
+        {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ec2.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        }
+    managed_policy: "{{ iam_policy.policy.arn }}"
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    state: present
+  register: ec2_role
+
+- name: Debug EC2 Role creation result
+  debug:
+    var: ec2_role
+
+- name: Set facts for IAM Role for EC2
+  set_fact:
+    ec2_role_arn: "{{ ec2_role.arn }}"
+   
+      
+- name: Save selected role info to YAML file
+  template:
+    src: templates/main.yml.j2  
+    dest: ./info/iam_info.yml 
+

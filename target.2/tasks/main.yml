@@ -1,0 +1,60 @@
+---
+- name: Include VPC info
+  include_vars:
+     file: info/id_info.yml
+     name: aws
+
+- name: Include VPC info
+  include_vars:
+     file: info/jenkins_info.yml
+     name: jenkins
+
+- name: Create jenkins-target
+  elb_target_group:
+      name: team5-jenkins
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      protocol: http
+      port: 80
+      vpc_id: "{{ aws.vpc }}"
+      health_check_path: /health
+      successful_response_codes: "200,250-260"
+      region: ap-northeast-2
+      target_type: instance
+      targets:
+        - Id: "{{ jenkins.jenkins }}"
+      state: present
+  register: jenkins_target
+- name: Debug
+  debug:
+    var: jenkins_target
+- name: Set facts for 
+  set_fact:
+    jenkins_arn: "{{ jenkins_target.target_group_arn }}"
+    
+- name: Create target
+  elb_target_group:
+      name: team5-target
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      protocol: http
+      port: 80
+      vpc_id: "{{ aws.vpc }}"
+      health_check_path: /health
+      successful_response_codes: "200,250-260"
+      region: ap-northeast-2
+      state: present
+  register: target
+
+- name: Debug 
+  debug:
+    var: target
+
+- name: Set facts for 
+  set_fact:
+    target_arn: "{{ target.target_group_arn }}"
+
+- name: Save selected aws info to YAML file
+  template:
+    src: templates/main.yml.j2
+    dest: ./info/targroup_info.yml

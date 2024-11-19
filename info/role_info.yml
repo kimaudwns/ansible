@@ -1,0 +1,3 @@
+codedeploy: "arn:aws:iam::491085389788:role/team5-CodeDeployServiceRole"
+ec2role: "arn:aws:iam::491085389788:policy/team5-ec2-policy"
+

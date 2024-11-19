@@ -1,0 +1,85 @@
+---
+
+- name: Load VPC and IGW info
+  include_vars:
+     file: info/id_info.yml
+     name: vpc  # 변수 이름
+- name: team5-Subnet-public1-2a
+  ec2_vpc_subnet:
+    cidr: "{{ public_subnet1_cidr }}"
+    vpc_id: "{{ vpc.vpc }}"
+    region: "{{ vpc_region }}"
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    az: ap-northeast-2a
+    map_public: yes
+    state: present
+    tags:
+      Name: team5-Subnet-public1a
+  register: subnet_result_public1a
+- name: Debug public subnet result for public1a
+  debug:
+    var: subnet_result_public1a
+
+- name: Set facts for public subnet 1a
+  set_fact:
+    public1a_id: "{{ subnet_result_public1a.subnet.id }}"
+
+- name: team5-Subnet-private1-2a
+  ec2_vpc_subnet:
+    cidr: 10.5.1.0/24
+    vpc_id: "{{ vpc.vpc }}"
+    region: ap-northeast-2
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    az: ap-northeast-2a
+    map_public: no
+    state: present
+    tags:
+      Name: team5-Subnet-private1-2a
+  register: subnet_result_private1a
+
+- name: Set facts for private subnet 1a
+  set_fact:
+    private1a_id: "{{ subnet_result_private1a.subnet.id }}"
+
+- name: team5-Subnet-public2-2c
+  ec2_vpc_subnet:
+    cidr: 10.5.102.0/24
+    vpc_id: "{{ vpc.vpc }}"
+    region: ap-northeast-2
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    az: ap-northeast-2c
+    map_public: yes
+    state: present
+    tags:
+      Name: team5-Subnet-public2-2c
+  register: subnet_result_public2c
+
+- name: Set facts for public subnet 2c
+  set_fact:
+    public2c_id: "{{ subnet_result_public2c.subnet.id }}"
+
+- name: team5-Subnet-private2-2c
+  ec2_vpc_subnet:
+    cidr: 10.5.2.0/24
+    vpc_id: "{{ vpc.vpc }}"
+    region: ap-northeast-2
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    az: ap-northeast-2c
+    map_public: no
+    state: present
+    tags:
+      Name: team5-Subnet-private2-2c
+  register: subnet_result_private2c
+
+- name: Set facts for private subnet 2c
+  set_fact:
+    private2c_id: "{{ subnet_result_private2c.subnet.id }}"
+
+- name: Save selected VPC info to YAML file
+  template:
+    src: templates/main.yml.j2  # 템플릿 파일 경로
+    dest: ./info/sudnet_info.yml  # 저장할 파일 경로

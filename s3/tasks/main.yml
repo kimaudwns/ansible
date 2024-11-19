@@ -1,0 +1,20 @@
+---
+# tasks file for creating s3 bucket using AWS CLI
+- name: Check if bucket exists
+  command: "aws s3api head-bucket --bucket team5-codedeploy-bucket --region ap-northeast-2"
+  environment:
+    AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
+    AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
+  register: bucket_check
+
+- name: Create S3 bucket if not exists
+  command: "aws s3api create-bucket --bucket team5-codedeploy-bucket --region ap-northeast-2 --create-bucket-configuration LocationConstraint=ap-northeast-2"
+  environment:
+    AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
+    AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
+  register: s3_creation
+  when: bucket_check.failed  
+
+- name: Debug creation result
+  debug:
+    var: s3_creation

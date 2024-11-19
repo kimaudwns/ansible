@@ -1,0 +1,109 @@
+---
+- name: Include VPC info
+  include_vars:
+     file: info/id_info.yml
+     name: aws
+- name: Debug public subnet result for public1a
+  debug:
+    var: aws
+
+- name: Include subnet info
+  include_vars:
+     file: info/sudnet_info.yml
+     name: subnet 
+- name: Debug public subnet result for public1a
+  debug:
+    var: subnet
+
+      
+- name: team5 public subnet route table
+  ec2_vpc_route_table:
+    vpc_id: "{{ aws.vpc }}"
+    region: ap-northeast-2
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    tags:
+      Name: team5-rtb-public
+    subnets:
+      - "{{ subnet.public1a }}"
+      - "{{ subnet.public2c }}"
+    routes:
+      - dest: 0.0.0.0/0
+        gateway_id: "{{ aws.igw }}"
+  register: public_route_table
+
+- name: Debug public subnet result for public1a
+  debug:
+    var: public_route_table
+
+- name: Set facts for public subnet 1a
+  set_fact:
+   route_public: "{{ public_route_table.route_table.id}}"
+
+- name: team5-new-nat-gateway
+  ec2_vpc_nat_gateway:
+    state: present                                  # NAT 게이트웨이
+    subnet_id: "{{ subnet.public1a }}"  # 서브넷 ID
+    region: ap-northeast-2
+    allocation_id: eipalloc-0be7141080c943449 
+    aws_access_key: "{{ aws_access_key }}"        # AWS 접근 키
+    aws_secret_key: "{{ aws_secret_key }}"
+      #    tags:
+      #  Name: team5-nat-gateway-private2 # 태그 설정
+  register: nat_getway
+  ignore_errors: yes  
+      
+- name: team5-NAT-protected route table1
+  ec2_vpc_route_table:
+    vpc_id: "{{ aws.vpc }}"
+    region: "{{ vpc_region }}"
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    tags:
+      Name: team5-rtb-private1
+    subnets:
+      - "{{ subnet.private1a }}"
+    routes:
+      - dest: 10.5.1.0/24
+        gateway_id: "{{ nat_getway.nat_gateway_id }}"      
+      - dest: 0.0.0.0/0
+        gateway_id: "{{ nat_getway.nat_gateway_id}}"
+  register: nat_route_table1
+  ignore_errors: yes
+- name: Debug public subnet result for public1a
+  debug:
+    var: nat_route_table1
+- name: Set facts for public subnet 1a
+  set_fact:
+     routetable_private1: "{{ nat_route_table1.route_table.id }}"
+    
+
+- name: team5-NAT-protected route table2
+  ec2_vpc_route_table:
+    vpc_id: "{{ aws.vpc }}"
+    region: "{{ vpc_region }}"
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    tags:
+      Name: team5-rtb-private2
+    subnets:
+      - "{{ subnet.private2c }}"
+    routes:
+      - dest: 10.5.2.0/24
+        gateway_id: "{{ nat_getway.nat_gateway_id }}"      
+      - dest: 0.0.0.0/0
+        gateway_id: "{{ nat_getway.nat_gateway_id }}"
+  register: nat_route_table2
+  ignore_errors: yes
+- name: Debug public subnet result for public1a
+  debug:
+    var: nat_route_table2
+
+- name: Set facts for public subnet
+  set_fact:
+     routetable_private2: "{{ nat_route_table2.route_table.id }}"
+
+- name: Save selected VPC info to YAML file
+  template:
+    src: templates/main.yml.j2  # 템플릿 파일 경로
+    dest: ./info/route_info.yml  # 저장할 파일 경로

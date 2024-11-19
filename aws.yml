@@ -1,0 +1,18 @@
+---
+- hosts: localhost
+  become: yes
+  vars_files:
+    - ./vars.yml
+  vars:     
+    ansible_python_interpreter: /usr/bin/python3
+  roles:
+    #  - aws_vpc_team5
+    #   - aws_subnet_team5
+    #   - route-table 
+    #   - group
+    #  - bastion
+    #  - jenkins 
+       - target
+       - target_image
+       - iam
+  
