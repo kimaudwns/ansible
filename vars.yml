@@ -2,3 +2,4 @@
 aws_access_key: # AWS access key 
 aws_secret_key: #"AWS secret key
 vpc_region: "ap-northeast-2"
+ubuntu: "AWS 에서 제공하는 우분투 이미지"
