@@ -7,6 +7,16 @@
   debug:
     var: subnet
 
+- name: Include group info
+  include_vars:
+     file: info/group_info.yml
+     name: group
+
+
+- name: Debug group
+  debug:
+    var: group
+
 - name: Create bastion
   ec2_instance:
     name: "team5-bastion"
@@ -15,7 +25,7 @@
     aws_access_key: "{{ aws_access_key }}"
     aws_secret_key: "{{ aws_secret_key }}"
     instance_type: t2.micro
-    security_group: team5-ssh
+    security_group: "{{group-ssh}}"
     network:
       assign_public_ip: true
     image_id: "{{ ubnutu_id }}"
